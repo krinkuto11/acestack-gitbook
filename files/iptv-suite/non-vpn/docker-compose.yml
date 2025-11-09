@@ -1,0 +1,57 @@
+services:
+### M3U Obtaining Pipeline: Zeronet -> M3USource (microservice) -> Dispatcharr -> Endclient
+    zeronet:
+        cap_add:
+          - NET_ADMIN
+          - SYS_ADMIN
+        image: ghcr.io/krinkuto11/zeronet-eguzkilore
+        container_name: zeronet
+        ports:
+          - "43110:43110"
+          - "43111:43111"
+        environment:
+          - PUID=1000
+          - PGID=1000
+          - TZ=Europe/Madrid
+        volumes:
+          - /srv/docker/config/zeronet:/app/ZeroNet/data
+        restart: unless-stopped
+        networks:
+          - aceserver
+    m3usource:
+      image: ghcr.io/krinkuto11/m3usource:latest
+      container_name: m3usource
+      ports:
+        - 5000:5000
+      environment:
+        - FLASK_ENV=development
+      restart: always
+      networks:
+        - aceserver
+      depends_on:
+        dispatcharr:
+            condition: service_started
+
+    dispatcharr:
+      image: ghcr.io/dispatcharr/dispatcharr:latest
+      container_name: dispatcharr
+      ports:
+        - 9191:9191
+      volumes:
+        - /srv/docker/databases/dispatcharr:/data
+      environment:
+        - DISPATCHARR_ENV=aio
+        - REDIS_HOST=localhost
+        - CELERY_BROKER_URL=redis://localhost:6379/0
+        - PGID=1000
+        - PUID=1000
+        - TZ=Europe/Madrid
+      #devices:
+      #  - /dev/dri:/dev/dri  # For Intel/AMD GPU acceleration (VA-API)  
+      restart: unless-stopped
+      networks:
+        - aceserver
+        
+networks:
+  aceserver:
+    external: true
