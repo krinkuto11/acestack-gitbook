@@ -49,7 +49,7 @@ services:
       networks:
         - aceserver
 
-    stream-checker:
+    streamflow:
       image: ghcr.io/krinkuto11/streamflow:latest
       container_name: streamflow
       networks:
